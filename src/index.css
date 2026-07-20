@@ -277,14 +277,14 @@ img {
 
 .notes-title {
   margin: 0 0 0.35rem;
-  font-size: calc(var(--cell) * 0.135);
+  font-size: 0.88rem;
   line-height: 1.25;
   color: var(--ink);
 }
 
 .notes-p {
   margin: 0;
-  font-size: calc(var(--cell) * 0.115);
+  font-size: 0.78rem;
   line-height: 1.35;
   color: #2a3340;
 }

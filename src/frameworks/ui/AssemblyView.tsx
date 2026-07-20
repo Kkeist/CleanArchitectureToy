@@ -114,6 +114,47 @@ function edgeDestination(edgeIndex: number): PieceKind {
   return RING_ORDER[(edgeIndex + 1) % RING_ORDER.length]!;
 }
 
+/**
+ * Arrow paths from board size + ring percentages only.
+ * Does not read live DOM boxes, so focus pulse / image swaps never redraw wires.
+ */
+function buildArrows(boardW: number, boardH: number): ArrowGeom[] {
+  const edge = Math.min(boardW, boardH);
+  if (edge <= 0) return [];
+  const cx = boardW / 2;
+  const cy = boardH / 2;
+  const inset = edge * CELL_OF_BOARD * 0.42;
+  const pts: Record<string, { x: number; y: number }> = {};
+  RING_ORDER.forEach((id, index) => {
+    const pos = ringPosition(index, RING_ORDER.length, id);
+    pts[id] = {
+      x: (Number.parseFloat(pos.left) / 100) * boardW,
+      y: (Number.parseFloat(pos.top) / 100) * boardH,
+    };
+  });
+  const next: ArrowGeom[] = [];
+  for (const [a, b] of PROCESS_EDGES) {
+    const pa = pts[a];
+    const pb = pts[b];
+    if (!pa || !pb) continue;
+    const e = edgePoints(pa.x, pa.y, pb.x, pb.y, inset, inset);
+    next.push(arrowBetween(e.x1, e.y1, e.x2, e.y2, cx, cy));
+  }
+  return next;
+}
+
+function arrowsEqual(a: readonly ArrowGeom[], b: readonly ArrowGeom[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i]!;
+    const y = b[i]!;
+    if (x.d !== y.d || x.mx !== y.mx || x.my !== y.my || x.angle !== y.angle) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function AssemblyView({ viewModel, controller }: Props) {
   const snap = useSyncExternalStore(viewModel.subscribe, viewModel.getSnapshot);
   const [arrangement, setArrangement] = useState<Arrangement>({});
@@ -228,61 +269,39 @@ export function AssemblyView({ viewModel, controller }: Props) {
   const measureArrows = useCallback(() => {
     const board = boardRef.current;
     if (!board) {
-      setArrows([]);
+      setArrows((prev) => (prev.length === 0 ? prev : []));
       return;
     }
-    const br = board.getBoundingClientRect();
-    const cx = br.width / 2;
-    const cy = br.height / 2;
-    const pts: Record<string, { x: number; y: number; inset: number }> = {};
-    for (const id of RING_ORDER) {
-      const el = nodeRefs.current[id];
-      if (!el) continue;
-      const r = el.getBoundingClientRect();
-      pts[id] = {
-        x: r.left + r.width / 2 - br.left,
-        y: r.top + r.height / 2 - br.top,
-        inset: Math.min(r.width, r.height) * 0.42,
-      };
-    }
-    const next: ArrowGeom[] = [];
-    for (const [a, b] of PROCESS_EDGES) {
-      const pa = pts[a];
-      const pb = pts[b];
-      if (!pa || !pb) continue;
-      const e = edgePoints(pa.x, pa.y, pb.x, pb.y, pa.inset, pb.inset);
-      next.push(arrowBetween(e.x1, e.y1, e.x2, e.y2, cx, cy));
-    }
-    setArrows(next);
-  }, [arrangement, snap.phase, images]);
-
-  useEffect(() => {
-    measureArrows();
-    const onResize = () => measureArrows();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [measureArrows]);
+    const next = buildArrows(board.clientWidth, board.clientHeight);
+    setArrows((prev) => (arrowsEqual(prev, next) ? prev : next));
+  }, []);
 
   /**
-   * --cell tracks the board edge only. Ghost lives outside .board, so the
-   * value is written on .app and every face (pile / ring / ghost) shares it.
+   * --cell and arrows both follow the board edge only.
+   * Skip style / state writes when the edge has not changed — stops wire flicker.
    */
   useEffect(() => {
     const board = boardRef.current;
     const app = board?.closest('.app') as HTMLElement | null;
     if (!board || !app) return;
 
-    const syncCell = () => {
+    let lastEdge = -1;
+    const syncLayout = () => {
       const edge = Math.min(board.clientWidth, board.clientHeight);
-      app.style.setProperty('--cell', `${Math.max(1, edge * CELL_OF_BOARD)}px`);
-      requestAnimationFrame(() => measureArrows());
+      if (edge !== lastEdge) {
+        lastEdge = edge;
+        app.style.setProperty('--cell', `${Math.max(1, edge * CELL_OF_BOARD)}px`);
+      }
+      measureArrows();
     };
 
-    syncCell();
-    const ro = new ResizeObserver(syncCell);
+    syncLayout();
+    const ro = new ResizeObserver(syncLayout);
     ro.observe(board);
+    window.addEventListener('resize', syncLayout);
     return () => {
       ro.disconnect();
+      window.removeEventListener('resize', syncLayout);
       app.style.removeProperty('--cell');
     };
   }, [measureArrows]);

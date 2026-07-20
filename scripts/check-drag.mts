@@ -96,6 +96,18 @@ const viewSrc = fs.readFileSync(
 );
 assert.match(viewSrc, /CELL_OF_BOARD/, 'cell size is a fraction of board edge');
 assert.match(viewSrc, /ResizeObserver/, 'cell syncs when the board resizes');
+assert.match(viewSrc, /function buildArrows/, 'arrows use board geometry, not live DOM boxes');
+assert.match(viewSrc, /arrowsEqual/, 'arrow state skips identical geometry');
+assert.doesNotMatch(
+  css,
+  /\.notes-title[\s\S]*?font-size:\s*calc\(\s*var\(--cell\)/,
+  'process notes title is not tied to piece cell size',
+);
+assert.doesNotMatch(
+  css,
+  /\.notes-p[\s\S]*?font-size:\s*calc\(\s*var\(--cell\)/,
+  'process notes body is not tied to piece cell size',
+);
 assert.match(css, /\.top-guide/, 'assemble guide lives in the top bar');
 assert.match(css, /\.top-guide[\s\S]*?color:\s*#ffffff/, 'top guide is white');
 assert.doesNotMatch(

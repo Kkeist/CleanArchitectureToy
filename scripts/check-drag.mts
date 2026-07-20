@@ -81,6 +81,9 @@ assert.match(
   'pile, ring, and ghost share one face size block',
 );
 assert.match(css, /width: var\(--cell\);/, 'face width is --cell');
+assert.doesNotMatch(css, /--cell:\s*clamp\([^)]*vw/, 'cell not viewport-width based');
+assert.doesNotMatch(css, /\.board[\s\S]*?96vw/, 'board edge not driven by viewport width');
+assert.match(css, /min\(100cqw,\s*100cqh\)/, 'board is largest square inside the stage');
 assert.doesNotMatch(css, /--piece-scale/, 'no per-piece CSS scale');
 assert.doesNotMatch(
   fs.readFileSync(path.resolve('src/frameworks/ui/assets.ts'), 'utf8'),
@@ -91,8 +94,20 @@ const viewSrc = fs.readFileSync(
   path.resolve('src/frameworks/ui/AssemblyView.tsx'),
   'utf8',
 );
+assert.match(viewSrc, /CELL_OF_BOARD/, 'cell size is a fraction of board edge');
+assert.match(viewSrc, /ResizeObserver/, 'cell syncs when the board resizes');
 assert.match(css, /\.top-guide/, 'assemble guide lives in the top bar');
 assert.match(css, /\.top-guide[\s\S]*?color:\s*#ffffff/, 'top guide is white');
+assert.doesNotMatch(
+  css,
+  /\.top-guide[\s\S]*?text-overflow:\s*ellipsis/,
+  'top guide never truncates with ellipsis',
+);
+assert.doesNotMatch(
+  css,
+  /\.top-guide[\s\S]*?white-space:\s*nowrap/,
+  'top guide wraps instead of clipping to one line',
+);
 assert.match(viewSrc, /className="top-guide"/, 'View renders top-guide');
 assert.match(
   viewSrc,
@@ -119,9 +134,14 @@ assert.match(
   /showPlaybackControls = snap\.phase === 'playing'/,
   'Auto only while playing, not after done',
 );
-assert.match(css, /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*17\.5rem/, 'topbar columns locked');
-assert.match(css, /\.topbar[\s\S]*?flex:\s*0 0 4\.25rem/, 'topbar height locked');
-assert.match(css, /\.controls[\s\S]*?width:\s*17\.5rem/, 'controls width locked');
+assert.match(css, /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*17\.5rem/, 'guide fills leftover; controls column fixed');
+assert.match(css, /\.controls[\s\S]*?max-width:\s*17\.5rem/, 'controls width locked on the right');
+assert.match(css, /\.top-guide[\s\S]*?min-width:\s*0/, 'guide stays inside leftover column');
+assert.doesNotMatch(
+  css,
+  /@media \(max-width: 720px\)[\s\S]*?\.topbar[\s\S]*?grid-template-columns:\s*1fr/,
+  'narrow screens keep the fixed controls column',
+);
 assert.match(viewSrc, /beginTesting/, 'path check starts from View click');
 assert.match(
   viewSrc,

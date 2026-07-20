@@ -47,6 +47,12 @@ export const PILE_ORDER: readonly SlotId[] = [
 ];
 
 /**
+ * Piece face size as a fraction of the board edge.
+ * One ratio only: cells follow the outer frame, never viewport width/height alone.
+ */
+export const CELL_OF_BOARD = 0.165;
+
+/**
  * Polar placement. Radius stays inside the board so bottom cells do not clip.
  */
 const RING_RADIUS = 41;

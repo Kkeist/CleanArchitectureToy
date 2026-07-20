@@ -52,7 +52,7 @@ Clean Architecture demo (React + TS). Control-flow toy from CSC207 notes.
 |------|------|
 | `src/frameworks/ui/AssemblyViewModel.ts` | ViewModel the View subscribes to |
 | `src/frameworks/ui/AssemblyView.tsx` | Place parts, click View to test path, then process animation |
-| `src/frameworks/ui/assets.ts` | Idle images, ring radius/nudges, pile layout |
+| `src/frameworks/ui/assets.ts` | Idle images, `CELL_OF_BOARD`, ring radius/nudges, pile layout |
 | `src/frameworks/ui/centerNotes.ts` | Assemble guidance + CSC207 §11.4 steps synced to frames |
 | `scripts/trim-pics.mts` | Alpha-only shared-family crop; promotes 1024 drops from `pics/` into restore first |
 

@@ -17,6 +17,7 @@ import {
 import type { AssemblyController } from '../../adapters/controllers/AssemblyController';
 import type { AssemblyViewModel } from './AssemblyViewModel';
 import {
+  CELL_OF_BOARD,
   idleSrc,
   picSrc,
   PILE_ORDER,
@@ -260,6 +261,30 @@ export function AssemblyView({ viewModel, controller }: Props) {
     const onResize = () => measureArrows();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+  }, [measureArrows]);
+
+  /**
+   * --cell tracks the board edge only. Ghost lives outside .board, so the
+   * value is written on .app and every face (pile / ring / ghost) shares it.
+   */
+  useEffect(() => {
+    const board = boardRef.current;
+    const app = board?.closest('.app') as HTMLElement | null;
+    if (!board || !app) return;
+
+    const syncCell = () => {
+      const edge = Math.min(board.clientWidth, board.clientHeight);
+      app.style.setProperty('--cell', `${Math.max(1, edge * CELL_OF_BOARD)}px`);
+      requestAnimationFrame(() => measureArrows());
+    };
+
+    syncCell();
+    const ro = new ResizeObserver(syncCell);
+    ro.observe(board);
+    return () => {
+      ro.disconnect();
+      app.style.removeProperty('--cell');
+    };
   }, [measureArrows]);
 
   const placeIntoSlot = useCallback((slot: SlotId, payload: DragPayload) => {

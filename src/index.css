@@ -261,7 +261,7 @@ img {
 
 .notes {
   position: relative;
-  width: 100%;
+  width: min(15rem, 100%);
   flex: 0 0 auto;
   max-height: 36%;
   overflow: auto;

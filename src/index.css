@@ -276,15 +276,15 @@ img {
 }
 
 .notes-title {
-  margin: 0 0 0.4rem;
-  font-size: calc(var(--cell) * 0.2);
+  margin: 0 0 0.35rem;
+  font-size: calc(var(--cell) * 0.135);
   line-height: 1.25;
   color: var(--ink);
 }
 
 .notes-p {
   margin: 0;
-  font-size: calc(var(--cell) * 0.17);
+  font-size: calc(var(--cell) * 0.115);
   line-height: 1.35;
   color: #2a3340;
 }

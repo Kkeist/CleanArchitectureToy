@@ -1,0 +1,9 @@
+# Long-cache hashed Vite assets; HTML always revalidated.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/pics/*
+  Cache-Control: public, max-age=86400
